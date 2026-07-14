@@ -23,6 +23,11 @@ For each of **Developer**, **Browsers**, **App Updates**, **Docker**:
 - [ ] A success / skip / fail entry appears in the operation log with a reason when relevant
 - [ ] After cleaning, re-scan reflects the reduced (or zero) size
 
+For Xcode / iOS Simulator cache targets:
+
+- [ ] Xcode DerivedData and iOS Simulator Caches appear as safe Developer targets when present
+- [ ] Cleaning them moves only the selected cache directory to Trash; simulator devices and runtimes remain untouched
+
 ## Safety behavior
 
 - [ ] No target is cleaned without an explicit checkbox selection
