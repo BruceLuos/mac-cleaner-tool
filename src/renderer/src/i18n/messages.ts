@@ -20,6 +20,8 @@ export const STRINGS = {
   selectLanguage: { zh: '语言', en: 'Language' },
   items: { zh: '项', en: 'items' },
   openDetails: { zh: '查看详情', en: 'Details' },
+  enableCategory: { zh: '启用此类别', en: 'Enable category' },
+  disableCategory: { zh: '停用此类别', en: 'Disable category' },
 
   cat_developer: { zh: '开发者缓存', en: 'Developer' },
   cat_browsers: { zh: '浏览器缓存', en: 'Browsers' },

@@ -85,6 +85,13 @@ src/
 - Trash-first: items go to Trash and stay recoverable until you empty it.
 - Missing / inaccessible / in-use targets are skipped with a logged reason, not silently dropped.
 
+## Local settings
+
+The app stores the selected locale, enabled categories, and selected target IDs locally in
+Electron's user-data directory (`settings.json`). It never stores cleanup paths or commands.
+If the file is missing or corrupted, the app falls back to Chinese, all categories enabled, and
+no selected targets. Settings persistence failures do not block scanning or cleaning.
+
 ## License
 
 Personal use.
