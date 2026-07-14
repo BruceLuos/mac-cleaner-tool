@@ -9,6 +9,7 @@ import type {
   OperationLogEntry,
   ScanResult
 } from '../../shared/cleanup-types'
+import type { AppSettings } from '../../shared/settings-types'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { DetailDrawer } from './features/dashboard/DetailDrawer'
 import { aggregateCategory } from './features/selectors'
@@ -36,7 +37,7 @@ function buildTarget(
 }
 
 function AppInner(): React.JSX.Element {
-  const { locale, t } = useI18n()
+  const { locale, setLocale, t } = useI18n()
   const api = typeof window !== 'undefined' ? window.macCleaner : undefined
 
   const [registry, setRegistry] = useState<CleanupTargetDefinition[]>([])
@@ -45,22 +46,47 @@ function AppInner(): React.JSX.Element {
   const [scanning, setScanning] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [enabledCategories, setEnabledCategories] = useState<CleanupCategory[]>([
+    'developer',
+    'browsers',
+    'app_updates',
+    'docker'
+  ])
+  const [settingsReady, setSettingsReady] = useState(false)
   const [openCategory, setOpenCategory] = useState<CleanupCategory | null>(null)
   const [log, setLog] = useState<OperationLogEntry[]>([])
 
   useEffect(() => {
     if (!api) return
     let cancelled = false
-    api
-      .getRegistry()
-      .then((reg) => {
-        if (!cancelled) setRegistry(reg)
+    Promise.all([api.getRegistry(), api.getSettings()])
+      .then(([reg, settings]) => {
+        if (cancelled) return
+        const targetIds = new Set(reg.map((target) => target.id))
+        const registryCategories = new Set(reg.map((target) => target.category))
+        setRegistry(reg)
+        setEnabledCategories(
+          settings.enabledCategories.filter((category) => registryCategories.has(category))
+        )
+        setSelectedIds(new Set(settings.selectedTargetIds.filter((id) => targetIds.has(id))))
+        setLocale(settings.locale)
+        setSettingsReady(true)
       })
       .catch(() => undefined)
     return () => {
       cancelled = true
     }
-  }, [api])
+  }, [api, setLocale])
+
+  useEffect(() => {
+    if (!api || !settingsReady) return
+    const settings: AppSettings = {
+      locale,
+      enabledCategories: [...enabledCategories],
+      selectedTargetIds: [...selectedIds]
+    }
+    void api.saveSettings(settings).catch(() => undefined)
+  }, [api, enabledCategories, locale, selectedIds, settingsReady])
 
   const appendLog = useCallback((level: OperationLogLevel, message: { zh: string; en: string }) => {
     const stamp = Date.now()
@@ -80,7 +106,9 @@ function AppInner(): React.JSX.Element {
   const refreshScan = useCallback(async (): Promise<void> => {
     if (!api) return
     const results = await api.scan()
-    setScanResults(new Map(results.map((result) => [result.id, result])))
+    const map = new Map(results.map((result) => [result.id, result]))
+    setScanResults(map)
+    setSelectedIds((prev) => new Set([...prev].filter((id) => map.get(id)?.exists)))
     setLastScanAt(Date.now())
   }, [api])
 
@@ -91,6 +119,7 @@ function AppInner(): React.JSX.Element {
       const results = await api.scan()
       const map = new Map(results.map((result) => [result.id, result]))
       setScanResults(map)
+      setSelectedIds((prev) => new Set([...prev].filter((id) => map.get(id)?.exists)))
       setLastScanAt(Date.now())
       const total = [...map.values()].reduce((sum, result) => sum + result.reclaimableBytes, 0)
       appendLog('info', bi('scanDone', { bytes: formatBytes(total, locale) }))
@@ -112,6 +141,27 @@ function AppInner(): React.JSX.Element {
       return next
     })
   }, [])
+
+  const toggleCategory = useCallback(
+    (category: CleanupCategory) => {
+      setEnabledCategories((prev) => {
+        const enabled = prev.includes(category)
+        if (enabled) {
+          setSelectedIds((current) => {
+            const next = new Set(current)
+            for (const entry of registry) {
+              if (entry.category === category) next.delete(entry.id)
+            }
+            return next
+          })
+          setOpenCategory((current) => (current === category ? null : current))
+          return prev.filter((item) => item !== category)
+        }
+        return [...prev, category]
+      })
+    },
+    [registry]
+  )
 
   const aggregate = openCategory ? aggregateCategory(registry, scanResults, openCategory) : null
 
@@ -204,8 +254,11 @@ function AppInner(): React.JSX.Element {
         scanResults={scanResults}
         lastScanAt={lastScanAt}
         scanning={scanning}
+        enabledCategories={enabledCategories}
         onScan={handleScan}
+        onToggleCategory={toggleCategory}
         onOpenCategory={(category) => {
+          if (!enabledCategories.includes(category)) return
           setOpenCategory(category)
           setSelectedIds(new Set())
         }}

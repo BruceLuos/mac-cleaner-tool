@@ -7,13 +7,17 @@ import type {
   CleanupTargetDefinition,
   ScanResult
 } from '../shared/cleanup-types'
+import type { AppSettings } from '../shared/settings-types'
 
 /** Narrow, typed surface the renderer is allowed to call. No raw filesystem access leaks through. */
 const macCleaner = {
   getRegistry: (): Promise<CleanupTargetDefinition[]> => ipcRenderer.invoke('cleanup:registry'),
   scan: (): Promise<ScanResult[]> => ipcRenderer.invoke('cleanup:scan'),
   cleanSelected: (targets: CleanupExecutionTarget[]): Promise<CleanupExecutionResult[]> =>
-    ipcRenderer.invoke('cleanup:clean', targets)
+    ipcRenderer.invoke('cleanup:clean', targets),
+  getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
+  saveSettings: (settings: AppSettings): Promise<void> =>
+    ipcRenderer.invoke('settings:save', settings)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

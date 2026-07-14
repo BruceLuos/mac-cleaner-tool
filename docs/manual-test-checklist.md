@@ -47,3 +47,9 @@ For Xcode / iOS Simulator cache targets:
 - [ ] `pnpm build:mac` completes and emits `dist/Mac Cleaner Tool.app` (+ `.dmg`)
 - [ ] The `.app` launches (right-click → Open on first launch for the unsigned build)
 - [ ] Scan + clean + log flows work identically inside the packaged app
+
+## Persisted settings
+
+- [ ] Restarting the app preserves locale, enabled categories, and selected targets
+- [ ] Disabling a category removes it from totals and disables detail access
+- [ ] A missing or malformed settings file falls back to Chinese, all categories enabled, and no selection

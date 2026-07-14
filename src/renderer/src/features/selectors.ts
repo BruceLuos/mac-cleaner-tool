@@ -36,9 +36,17 @@ export function aggregateCategory(
   }
 }
 
-export function totalReclaimable(scanResults: Map<string, ScanResult>): number {
+export function totalReclaimable(
+  registry: CleanupTargetDefinition[],
+  scanResults: Map<string, ScanResult>,
+  enabledCategories: CleanupCategory[]
+): number {
+  const enabled = new Set(enabledCategories)
   let total = 0
-  for (const result of scanResults.values()) {
+  for (const entry of registry) {
+    if (!enabled.has(entry.category)) continue
+    const result = scanResults.get(entry.id)
+    if (!result) continue
     total += result.reclaimableBytes
   }
   return total

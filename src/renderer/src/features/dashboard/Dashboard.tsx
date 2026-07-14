@@ -14,8 +14,10 @@ interface Props {
   scanResults: Map<string, ScanResult>
   lastScanAt: number | null
   scanning: boolean
+  enabledCategories: CleanupCategory[]
   onScan: () => void
   onOpenCategory: (category: CleanupCategory) => void
+  onToggleCategory: (category: CleanupCategory) => void
 }
 
 export function Dashboard({
@@ -23,11 +25,13 @@ export function Dashboard({
   scanResults,
   lastScanAt,
   scanning,
+  enabledCategories,
   onScan,
-  onOpenCategory
+  onOpenCategory,
+  onToggleCategory
 }: Props): React.JSX.Element {
   const { locale, setLocale, t } = useI18n()
-  const total = totalReclaimable(scanResults)
+  const total = totalReclaimable(registry, scanResults, enabledCategories)
   const aggregates: CategoryAggregate[] = CATEGORY_ORDER.map((category) =>
     aggregateCategory(registry, scanResults, category)
   )
@@ -78,7 +82,9 @@ export function Dashboard({
           <CategoryCard
             key={aggregate.category}
             aggregate={aggregate}
+            enabled={enabledCategories.includes(aggregate.category)}
             onOpen={() => onOpenCategory(aggregate.category)}
+            onToggleEnabled={() => onToggleCategory(aggregate.category)}
           />
         ))}
       </div>
