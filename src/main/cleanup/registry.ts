@@ -55,6 +55,30 @@ export const cleanupRegistry: CleanupTargetDefinition[] = [
     riskLevel: 'safe',
     cleanupMode: 'trash'
   },
+  {
+    id: 'xcode-derived-data',
+    category: 'developer',
+    title: { zh: 'Xcode DerivedData', en: 'Xcode DerivedData' },
+    description: {
+      zh: 'Xcode 的可再生构建缓存，删除后下次构建会重新生成。',
+      en: 'Regenerable Xcode build data; recreated by the next build.'
+    },
+    paths: ['~/Library/Developer/Xcode/DerivedData'],
+    riskLevel: 'safe',
+    cleanupMode: 'trash'
+  },
+  {
+    id: 'coresimulator-caches',
+    category: 'developer',
+    title: { zh: 'iOS 模拟器缓存', en: 'iOS Simulator Caches' },
+    description: {
+      zh: 'CoreSimulator 的可再生缓存，不包含模拟器设备数据或运行时。',
+      en: 'Regenerable CoreSimulator caches; excludes device data and runtimes.'
+    },
+    paths: ['~/Library/Developer/CoreSimulator/Caches'],
+    riskLevel: 'safe',
+    cleanupMode: 'trash'
+  },
 
   // ---- Browser caches ----
   {
